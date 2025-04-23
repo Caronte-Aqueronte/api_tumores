@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 from numpy import ndarray
 
-from neuronal_network.dto.prediction_response_dto import PredicionResponseDto
+from neuronal_network.dto.prediction_response_dto import PredictionResponseDto
 from neuronal_network.dto.entry_request_dto import EntryRequestDTO
 
 
@@ -26,7 +26,7 @@ class EntryConverter:
         return [(entrie.get_first_feature(), entrie.get_second_feature())
                 for entrie in entries]
 
-    def convert_entries_to_predictions_response_dto(self, entries: List[EntryRequestDTO], predicitons: ndarray) -> List[PredicionResponseDto]:
+    def convert_entries_to_predictions_response_dto(self, entries: List[EntryRequestDTO], predicitons: ndarray) -> List[PredictionResponseDto]:
         """
         Utilizamos zip para emparejar en tuplaz las ocurrencias correspondientes de ambas listas 
         de forma uno a uno, e iteramos sobre cada par para crear instancias de PrediccionResponseDto,
@@ -40,14 +40,14 @@ class EntryConverter:
             List[PredicionResponseDto]: Lista de objetos que contienen tanto la entrada original como su predicción correspondiente, en un formato estructurado.
         """
         # lista que guardara las respuestas
-        responses: List[PredicionResponseDto] = []
+        responses: List[PredictionResponseDto] = []
 
         # con zip juntamos las courrencias de ambas listas 1 a 1 e iteramos sobre las nuevas convinacioens
         # para crear los nuevos objetos PredicionResponseDto, los adjuntamos a la lista de responses
         for entry, prediciton in zip(entries, predicitons):
 
             # creamos el nuevo objeto de respuesta con los atributos de las ocurrencias de la tupla
-            responses.append(PredicionResponseDto(
+            responses.append(PredictionResponseDto(
                 x_feature=entry.get_first_feature(), y_feature=entry.get_second_feature(), prediction=prediciton))
 
         # retonramos la lista elimentada

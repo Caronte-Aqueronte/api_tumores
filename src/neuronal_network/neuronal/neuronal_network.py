@@ -74,7 +74,7 @@ class NeuronalNetwork:
         """
         return numpy.mean((predictions - targets) ** 2)  # se eleva para convertir valores negativos a positivos
 
-    def train(self) -> Dict[int, float]:
+    def train(self) -> Tuple[Dict[int, float], float]:
 
         # aqui vamos a guardar el error de cada epoca, donde la clave es el numero
         # de epoca y el valor es el error de la epoca
@@ -131,7 +131,16 @@ class NeuronalNetwork:
         # guardamos los pesos y el sesgo calculado para que sirva en el proceso de
         self.__weights = weights
         self.__bias = bias
-        return error_per_epoach
+
+        # calcular accuracy final sobre entrenamiento
+        final_predictions = self.__sigmoid(
+            numpy.dot(training_features, weights) + bias)
+        binary_predictions = self.__convert_predictions_to_binary(
+            final_predictions)
+        final_accuracy = self.__calculate_accurancy_percentage(
+            binary_predictions)
+
+        return error_per_epoach, final_accuracy
 
     def predict(self, inputs: List[EntryRequestDTO]) -> Tuple[List[EntryRequestDTO], ndarray, float]:
 
@@ -156,11 +165,7 @@ class NeuronalNetwork:
         binary_predictions: ndarray = self.__convert_predictions_to_binary(
             predictions)
 
-        # mandamos a calcular la exactitud
-        acurrancy_percentage: float = self.__calculate_accurancy_percentage(
-            binary_predictions)
-
-        return inputs, binary_predictions, acurrancy_percentage
+        return inputs, binary_predictions
 
     def __convert_predictions_to_binary(self, final_predictions: ndarray) -> ndarray:
         """
