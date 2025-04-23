@@ -1,5 +1,8 @@
 
-class Entry:
+from pydantic import BaseModel
+
+
+class EntryRequestDTO(BaseModel):
 
     def __init__(self, first_feature: float, second_feature: float):
         self.__first_feature = first_feature

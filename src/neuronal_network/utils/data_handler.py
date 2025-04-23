@@ -27,12 +27,20 @@ class DataHandler:
         self.__scaler: StandardScaler = scaler
 
     def get_data_for_train(self) -> Tuple[ndarray, ndarray]:
+        """
+        Esta funcion agarra los datos y los prepara para entrenar la red neuronal.
 
+        Primero toma solo un porcentaje de todos los datos, segun lo que le digamos, de cada registro
+        agarra dos columnas especificas.
+
+        Esas columnas las escala, o sea, las normaliza para que no tengan valores tan grandes o desbalanceados 
+        que puedan hacer que la funcion sigmoide no funcione bien.
+
+        Returns:
+            Tuple[ndarray, ndarray]: las features escaladas y las etiquetas en forma de matriz.
+        """
         # seleccionamos el porcentaje de datos a usar
-        elements_for_train: Tuple[ndarray,
-                                  ndarray] = self.__get_percentage_of_data()
-        features_for_train: ndarray = elements_for_train[0]
-        labels_for_train: ndarray = elements_for_train[1]
+        features_for_train, labels_for_train = self.__get_percentage_of_data()
 
         # seleccionamos en los datos solo las columnas que se desean, : indica que seleccionamos todas las filas
         features_for_train = features_for_train[:, [
@@ -48,6 +56,11 @@ class DataHandler:
         return features_for_train, labels_for_train
 
     def __get_percentage_of_data(self) -> Tuple[ndarray, ndarray]:
+        """
+        Agarra solo un porcentaje de los datos originales segun lo que se haya indicado.
+        Returns:
+            Tuple[ndarray, ndarray]: subset de features y labels limitado al porcentaje especificado.
+        """
         # shape devuelve las dimensiones en una tupla, 0 es el numero de filas
         total_elements = self.__fetures.shape[0]
         # calculamos el numero de elementos a utilizar multiplicandolo por el porcentaje

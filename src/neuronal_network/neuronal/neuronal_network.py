@@ -1,11 +1,10 @@
 
 from typing import Dict, List, Tuple
-from fastapi import HTTPException, status
 import numpy
 from numpy import ndarray
 from sklearn.discriminant_analysis import StandardScaler
 
-from neuronal_network.models.entry import Entry
+from neuronal_network.dto.entry_request_dto import EntryRequestDTO
 from neuronal_network.utils.data_handler import DataHandler
 from neuronal_network.utils.entry_list_converter import EntryConverter
 
@@ -35,6 +34,8 @@ class NeuronalNetwork:
         # clase que nos va a preparar la data de entrenamiento
         self.__data_handler = DataHandler(
             percentage_to_use, first_feature, second_feature, self.__scaler)
+
+        self.__entry_converter = EntryConverter()
 
     def __sigmoid(self, entry: int | ndarray) -> float | ndarray:
         """
@@ -80,13 +81,7 @@ class NeuronalNetwork:
         error_per_epoach: Dict[int, float] = {}
 
         # mandamos a trar la data preparada con el objeto que se encarga de preprarar la data
-        elements_for_train: Tuple[ndarray,
-                                  ndarray] = self.__data_handler.get_data_for_train()
-
-        # extraemos los valores de la tupla devuelta, la posicion 0 son los bounds,
-        # y la posicion 1 es el valor de cada bound maligno o benigno
-        training_features: ndarray = elements_for_train[0]
-        self.__training_labels: ndarray = elements_for_train[1]
+        training_features,  self.__training_labels = self.__data_handler.get_data_for_train()
 
         # inicializamos los pesos con dis normal, crea una matriz (2,1)
         weights: ndarray = numpy.random.randn(2, 1)
@@ -138,15 +133,11 @@ class NeuronalNetwork:
         self.__bias = bias
         return error_per_epoach
 
-    def predict(self, inputs: List[Entry]):
-
-        if self.__weights is None:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="La red no está entrenada aún.")
+    def predict(self, inputs: List[EntryRequestDTO]) -> Tuple[List[EntryRequestDTO], ndarray, float]:
 
         # mandamos a convertir las entries en una lista de tuplas
-        entryListConverter = EntryConverter(inputs)
-        inputs_tuple_list = entryListConverter.convert_list_of_entry_to_list_of_tuple()
+        inputs_tuple_list = self.__entry_converter.convert_list_of_entry_to_list_of_tuple(
+            inputs)
 
         # convertimos las tuplas en un ndarray
         data: ndarray = numpy.array(inputs_tuple_list)
