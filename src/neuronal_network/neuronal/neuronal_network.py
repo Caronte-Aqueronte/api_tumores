@@ -5,9 +5,8 @@ from numpy import ndarray
 from sklearn.discriminant_analysis import StandardScaler
 
 from neuronal_network.dto.desicion_boundary_points import DesicionBoundaryPoints
-from neuronal_network.dto.entry_request_dto import EntryRequestDTO
+from neuronal_network.dto.predict_request_dto import PredictRequestDTO
 from neuronal_network.utils.data_handler import DataHandler
-from neuronal_network.utils.entry_list_converter import EntryConverter
 
 
 class NeuronalNetwork:
@@ -15,7 +14,7 @@ class NeuronalNetwork:
     def __init__(self, max_epoachs: int, learning_rate: float, first_feature: int, second_feature: int, percentage_to_use: int):
 
         # indica hasta donde iterara el entrenamiento, lo escoje el usuario en el front
-        self.__max_epoachs: int = max_epoachs
+        self.__max_epochs: int = max_epoachs
 
         # se divide por cien para transformar el valor en un porcentaje
         self.__learning_rate: float = learning_rate / 100
@@ -36,8 +35,6 @@ class NeuronalNetwork:
         # clase que nos va a preparar la data de entrenamiento
         self.__data_handler = DataHandler(
             percentage_to_use, first_feature, second_feature, self.__scaler)
-
-        self.__entry_converter = EntryConverter()
 
     def __sigmoid(self, entry: int | ndarray) -> float | ndarray:
         """
@@ -80,7 +77,7 @@ class NeuronalNetwork:
 
         # aqui vamos a guardar el error de cada epoca, donde la clave es el numero
         # de epoca y el valor es el error de la epoca
-        error_per_epoach: Dict[int, float] = {}
+        error_per_epoch: Dict[int, float] = {}
 
         # mandamos a trar la data preparada con el objeto que se encarga de preprarar la data
         self.__training_features,  self.__training_labels = self.__data_handler.get_data_for_train()
@@ -89,7 +86,7 @@ class NeuronalNetwork:
         weights: ndarray = numpy.random.randn(2, 1)
         bias: float = 0.0
 
-        for epoach in range(self.__max_epoachs):
+        for epoch in range(self.__max_epochs):
 
             # -----------------------------------------------------------------------------------propagacion hacia adelante
 
@@ -107,7 +104,7 @@ class NeuronalNetwork:
                 predicted_outputs, self.__training_labels)
 
             # alimentamos el set que representa el numero de la epoca y su error (para grafico en front)
-            error_per_epoach[epoach + 1] = current_loss
+            error_per_epoch[epoch + 1] = current_loss
 
             # calculamos que tan lejos estuvo la prediccion del valor real
             prediction_error: ndarray = predicted_outputs - self.__training_labels
@@ -140,21 +137,18 @@ class NeuronalNetwork:
 
         binary_predictions = self.__convert_predictions_to_binary(
             final_predictions)
-        final_accuracy = self.__calculate_accurancy_percentage(
+        final_accuracy = self.__calculate_accuracy_percentage(
             binary_predictions)
 
         desicion_boundary_points: DesicionBoundaryPoints = self.__generate_decision_boundary()
 
-        return error_per_epoach, final_accuracy, desicion_boundary_points
+        return error_per_epoch, final_accuracy, desicion_boundary_points
 
-    def predict(self, inputs: List[EntryRequestDTO]) -> Tuple[List[EntryRequestDTO], ndarray, float]:
-
-        # mandamos a convertir las entries en una lista de tuplas
-        inputs_tuple_list = self.__entry_converter.convert_list_of_entry_to_list_of_tuple(
-            inputs)
+    def predict(self, input: PredictRequestDTO) -> str:
 
         # convertimos las tuplas en un ndarray
-        data: ndarray = numpy.array(inputs_tuple_list)
+        data: ndarray = numpy.array(
+            [(input.first_feature, input.second_feature)])
 
         # escalamos los datos de la mismo forma en que fueroin escalados los datos de entrenamiento para que no se sature la signoide
         data = self.__scaler.transform(data)
@@ -165,12 +159,7 @@ class NeuronalNetwork:
         # aplicamos la función sigmoide para convertir esos valores en probs 0 y 1
         predictions = self.__sigmoid(linear_combination)
 
-        # se convierte en binario las predicciones donde si una pred es menor a 0.5 entonces se le asigna 0 y 1 sino
-        # inicando asi benigno o maligno
-        binary_predictions: ndarray = self.__convert_predictions_to_binary(
-            predictions)
-
-        return inputs, binary_predictions
+        return "Maligno" if predictions[0][0] > 0.5 else "Benigno"
 
     def __generate_decision_boundary(self) -> DesicionBoundaryPoints:
         # los pesos al traterse de una matriz de (2,0) debemos aplanarla para que sea un array normal
@@ -216,7 +205,7 @@ class NeuronalNetwork:
 
         return binary_predictions
 
-    def __calculate_accurancy_percentage(self, binary_predictions: ndarray) -> float:
+    def __calculate_accuracy_percentage(self, binary_predictions: ndarray) -> float:
         """
         Se compara cada elemento del arreglo de predicciones binarias con el arreglo de valores reales,
         generando un nuevo arreglo de True si coincide o False si no coincide

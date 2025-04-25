@@ -5,6 +5,6 @@ from pydantic import BaseModel
 from neuronal_network.dto.prediction_response_dto import PredictionResponseDto
 
 
-class ModelResultResponseDto(BaseModel):
+class PredictResponseDto(BaseModel):
 
-    predictions: List[PredictionResponseDto]
+    prediction: str

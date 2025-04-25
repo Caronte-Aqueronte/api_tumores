@@ -2,10 +2,10 @@ from typing import Dict, List, Tuple
 from fastapi import APIRouter
 from numpy import ndarray
 
-from neuronal_network.dto.model_result_response_dto import ModelResultResponseDto
+from neuronal_network.dto.model_result_response_dto import PredictResponseDto
 from neuronal_network.dto.prediction_response_dto import PredictionResponseDto
 from neuronal_network.dto.train_request_dto import TrainRequestDTO
-from neuronal_network.dto.entry_request_dto import EntryRequestDTO
+from neuronal_network.dto.predict_request_dto import PredictRequestDTO
 from neuronal_network.dto.train_response_dto import TrainResponseDTO
 from neuronal_network.services.neuronal_network_service import NeuronalNetworkService
 
@@ -29,6 +29,6 @@ def train_model(train_request_dto: TrainRequestDTO) -> TrainResponseDTO:
     return neuronal_network_service.train_neuronal_network(train_request_dto)
 
 
-@router.post("/predict", response_model=ModelResultResponseDto)
-def predict(inputs: List[EntryRequestDTO]) -> ModelResultResponseDto:
+@router.post("/predict", response_model=PredictResponseDto)
+def predict(inputs: PredictRequestDTO) -> PredictResponseDto:
     return neuronal_network_service.predict(inputs)
