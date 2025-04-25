@@ -12,6 +12,32 @@ class EntryConverter:
     def __init__(self):
         pass
 
+    def convert_features_and_labels_to_predictions_response_dto(self, features: ndarray, labels: ndarray) -> List[PredictionResponseDto]:
+        """
+        Convierte cada par de featurs y su valo en objetos PredictionResponseDto.
+
+        Args:
+            features (ndarray): Arreglo con las caracteristicas.
+            predictions (ndarray): Arreglo con las predicciones.
+
+        Returns:
+            List[PredictionResponseDto]: Lista de respuestas con las predicciones asociadas a sus caracteristicas.
+        """
+
+        # lista que guardara las respuestas
+        responses: List[PredictionResponseDto] = []
+
+        # con zip juntamos las courrencias de ambas listas 1 a 1 e iteramos sobre las nuevas convinacioens
+        # para crear los nuevos objetos PredicionResponseDto, los adjuntamos a la lista de responses
+        for entry, prediciton in zip(features, labels):
+            responses.append(PredictionResponseDto(
+                x_feature=entry[0],
+                y_feature=entry[1],
+                prediction=prediciton
+            ))
+        # retonramos la lista elimentada
+        return responses
+
     def convert_list_of_entry_to_list_of_tuple(self, entries: List[EntryRequestDTO]) -> List[Tuple[float, float]]:
         """
         Se itera sobre cada elemento de la lista de entradas dada par de valores de la entrada se agrupa como una tupla. 

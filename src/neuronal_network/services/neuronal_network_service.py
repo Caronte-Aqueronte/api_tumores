@@ -35,10 +35,10 @@ class NeuronalNetworkService:
             train_request_dto.percentage_to_use
         )
 
-        error_per_epoach, final_acurrancy = self.__neuronal_network.train()
+        error_per_epoach, final_acurrancy, desicion_boundary_points = self.__neuronal_network.train()
 
         # lo entrenamos y obtenemos la respuesta (el dic para que el front pueda gradicar el error por epoca)
-        return TrainResponseDTO(error_per_apoach=error_per_epoach, final_acurrancy=final_acurrancy)
+        return TrainResponseDTO(error_per_apoach=error_per_epoach, final_acurrancy=final_acurrancy, desicion_boundary_points=desicion_boundary_points)
 
     def predict(self, inputs: List[EntryRequestDTO]) -> ModelResultResponseDto:
 

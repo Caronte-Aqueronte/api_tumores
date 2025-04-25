@@ -4,6 +4,7 @@ import numpy
 from numpy import ndarray
 from sklearn.discriminant_analysis import StandardScaler
 
+from neuronal_network.dto.desicion_boundary_points import DesicionBoundaryPoints
 from neuronal_network.dto.entry_request_dto import EntryRequestDTO
 from neuronal_network.utils.data_handler import DataHandler
 from neuronal_network.utils.entry_list_converter import EntryConverter
@@ -27,6 +28,7 @@ class NeuronalNetwork:
 
         # son necesearias para poder transformar las predicciones en un formato binario (benigno, maligno)
         self.__training_labels: ndarray = None
+        self.__training_features: ndarray = None
 
         # escalador que servira para proporcionar los datos y evitar que sigmoide se sature
         self.__scaler: StandardScaler = StandardScaler()
@@ -74,14 +76,14 @@ class NeuronalNetwork:
         """
         return numpy.mean((predictions - targets) ** 2)  # se eleva para convertir valores negativos a positivos
 
-    def train(self) -> Tuple[Dict[int, float], float]:
+    def train(self) -> Tuple[Dict[int, float], float, DesicionBoundaryPoints]:
 
         # aqui vamos a guardar el error de cada epoca, donde la clave es el numero
         # de epoca y el valor es el error de la epoca
         error_per_epoach: Dict[int, float] = {}
 
         # mandamos a trar la data preparada con el objeto que se encarga de preprarar la data
-        training_features,  self.__training_labels = self.__data_handler.get_data_for_train()
+        self.__training_features,  self.__training_labels = self.__data_handler.get_data_for_train()
 
         # inicializamos los pesos con dis normal, crea una matriz (2,1)
         weights: ndarray = numpy.random.randn(2, 1)
@@ -93,7 +95,7 @@ class NeuronalNetwork:
 
             # hacemos la prediccion combinando los datos con los pesos actuales
             linear_combination: ndarray = numpy.dot(
-                training_features, weights) + bias
+                self.__training_features, weights) + bias
 
             # aplicamos la funcion sigmoide para obtener un resultado entre 0 y 1
             predicted_outputs = self.__sigmoid(linear_combination)
@@ -121,7 +123,7 @@ class NeuronalNetwork:
 
             # calculamos cuanto deberiamos ajustar los pesos segun el error
             deriv: ndarray = numpy.dot(
-                training_features.T, gradient_output_layer)
+                self.__training_features.T, gradient_output_layer)
             bias_deriv: float = numpy.sum(gradient_output_layer)
 
             # ajustmaos los pesos con lo que nos dijo la derivada, tambien las bias
@@ -134,13 +136,16 @@ class NeuronalNetwork:
 
         # calcular accuracy final sobre entrenamiento
         final_predictions = self.__sigmoid(
-            numpy.dot(training_features, weights) + bias)
+            numpy.dot(self.__training_features, weights) + bias)
+
         binary_predictions = self.__convert_predictions_to_binary(
             final_predictions)
         final_accuracy = self.__calculate_accurancy_percentage(
             binary_predictions)
 
-        return error_per_epoach, final_accuracy
+        desicion_boundary_points: DesicionBoundaryPoints = self.__generate_decision_boundary()
+
+        return error_per_epoach, final_accuracy, desicion_boundary_points
 
     def predict(self, inputs: List[EntryRequestDTO]) -> Tuple[List[EntryRequestDTO], ndarray, float]:
 
@@ -166,6 +171,34 @@ class NeuronalNetwork:
             predictions)
 
         return inputs, binary_predictions
+
+    def __generate_decision_boundary(self) -> DesicionBoundaryPoints:
+        # los pesos al traterse de una matriz de (2,0) debemos aplanarla para que sea un array normal
+        weight_1, weight_2 = self.__weights.flatten()
+
+        # obtenemos solamente los mayores y menores de la primera posicion de las featrues pero con : tomamos en cuenta
+        # todas las features
+        feature1_min = min(self.__training_features[:, 0])
+        feature1_max = max(self.__training_features[:, 0])
+
+        feature2_for_min = - (weight_1 / weight_2) * \
+            feature1_min - (self.__bias / weight_2)
+
+        feature2_for_max = - (weight_1 / weight_2) * \
+            feature1_max - (self.__bias / weight_2)
+
+        # se crea una nueva matriz con essas coordenadas para poder desescalarlas, ya que los
+        # __training_features han sido escalados al momento del entranemiento
+        points_scaled = numpy.array([[feature1_min, feature2_for_min],
+                                     [feature1_max, feature2_for_max]])
+
+        # desescalamos los resultados
+        points_original = self.__scaler.inverse_transform(points_scaled)
+
+        return DesicionBoundaryPoints(
+            x=float(points_original[0][0]), y=float(points_original[0][1]),
+            x2=float(points_original[1][0]), y2=float(points_original[1][1])
+        )
 
     def __convert_predictions_to_binary(self, final_predictions: ndarray) -> ndarray:
         """
