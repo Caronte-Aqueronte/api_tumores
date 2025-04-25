@@ -1,7 +1,7 @@
 
 from typing import Tuple
 from numpy import ndarray
-from sklearn.discriminant_analysis import StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import Bunch
 from sklearn.datasets import load_breast_cancer
 

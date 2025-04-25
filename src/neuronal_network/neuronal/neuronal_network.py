@@ -1,8 +1,8 @@
 
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 import numpy
 from numpy import ndarray
-from sklearn.discriminant_analysis import StandardScaler
+from sklearn.preprocessing import StandardScaler
 
 from neuronal_network.dto.desicion_boundary_points import DesicionBoundaryPoints
 from neuronal_network.dto.predict_request_dto import PredictRequestDTO
