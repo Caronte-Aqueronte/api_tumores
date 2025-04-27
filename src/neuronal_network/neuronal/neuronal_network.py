@@ -36,43 +36,6 @@ class NeuronalNetwork:
         self.__data_handler = DataHandler(
             percentage_to_use, first_feature, second_feature, self.__scaler)
 
-    def __sigmoid(self, entry: int | ndarray) -> float | ndarray:
-        """
-        Aplica la funcion sigmoide a un valor escalar o a cada elemento de un arreglo.
-
-        Args:
-            entry (int | ndarray): valor o arreglo de valores sobre los que se aplica la funcion sigmoide.
-
-        Returns:
-            float | ndarray: resultado de aplicar la funcion sigmoide.
-        """
-        return 1 / (1 + numpy.exp(-entry))
-
-    def __sigmoid_deriv(self, input_value: int | ndarray) -> float | ndarray:
-        """
-        Calcula la derivada de la funcion sigmoide evaluada en un valor o arreglo.
-
-        Args:
-            input_value (int | ndarray): valor escalar o arreglo donde se evaluara la derivada.
-
-        Returns:
-            float | ndarray: resultado de la derivada de la funcion sigmoide.
-        """
-        sigmoid_value = self.__sigmoid(input_value)
-        return sigmoid_value * (1 - sigmoid_value)
-
-    def __mean_squared_error(self, predictions: ndarray, targets: ndarray) -> float:
-        """
-        Calcula el error cuadratico medio entre las predicciones del modelo y los valores reales.
-
-        Args:
-            predictions (numpy.ndarray): arreglo de valores predichos por el modelo
-            targets (numpy.ndarray): arreglo de valores deseados
-        Returns:
-            float: valor del error cuadratico medio
-        """
-        return numpy.mean((predictions - targets) ** 2)  # se eleva para convertir valores negativos a positivos
-
     def train(self) -> Tuple[Dict[int, float], float, DesicionBoundaryPoints]:
 
         # aqui vamos a guardar el error de cada epoca, donde la clave es el numero
@@ -100,14 +63,14 @@ class NeuronalNetwork:
             # ---------------------------------------------------------------------------------------calculo de errores
 
             # medimos el error total de esta vuelta del ciclo para ver como va mejorando
-            current_loss: float = self.__mean_squared_error(
-                predicted_outputs, self.__training_labels)
+            epoch_loss: float = self.__mean_squared_error(
+                predicted_outputs)
 
             # alimentamos el set que representa el numero de la epoca y su error (para grafico en front)
-            error_per_epoch[epoch + 1] = current_loss
+            error_per_epoch[epoch + 1] = epoch_loss
 
             # calculamos que tan lejos estuvo la prediccion del valor real
-            prediction_error: ndarray = predicted_outputs - self.__training_labels
+            individual_errors: ndarray = predicted_outputs - self.__training_labels
 
             # --------------------------------------------------------------------------------------- propagacion hacia atras
 
@@ -116,7 +79,7 @@ class NeuronalNetwork:
                 linear_combination)
 
             # multiplicamos el error por lo que cambia la sigmoide para cada entrada
-            gradient_output_layer: ndarray = prediction_error * sigmoid_gradient
+            gradient_output_layer: ndarray = individual_errors * sigmoid_gradient
 
             # calculamos cuanto deberiamos ajustar los pesos segun el error
             deriv: ndarray = numpy.dot(
@@ -161,33 +124,41 @@ class NeuronalNetwork:
 
         return "Maligno" if predictions[0][0] > 0.5 else "Benigno"
 
-    def __generate_decision_boundary(self) -> DesicionBoundaryPoints:
-        # los pesos al traterse de una matriz de (2,0) debemos aplanarla para que sea un array normal
-        weight_1, weight_2 = self.__weights.flatten()
+    def __sigmoid(self, entry: int | ndarray) -> float | ndarray:
+        """
+        Aplica la funcion sigmoide a un valor escalar o a cada elemento de un arreglo.
 
-        # obtenemos solamente los mayores y menores de la primera posicion de las featrues pero con : tomamos en cuenta
-        # todas las features
-        feature1_min = min(self.__training_features[:, 0])
-        feature1_max = max(self.__training_features[:, 0])
+        Args:
+            entry (int | ndarray): valor o arreglo de valores sobre los que se aplica la funcion sigmoide.
 
-        feature2_for_min = - (weight_1 / weight_2) * \
-            feature1_min - (self.__bias / weight_2)
+        Returns:
+            float | ndarray: resultado de aplicar la funcion sigmoide.
+        """
+        return 1 / (1 + numpy.exp(-entry))
 
-        feature2_for_max = - (weight_1 / weight_2) * \
-            feature1_max - (self.__bias / weight_2)
+    def __sigmoid_deriv(self, input_value: int | ndarray) -> float | ndarray:
+        """
+        Calcula la derivada de la funcion sigmoide evaluada en un valor o arreglo.
 
-        # se crea una nueva matriz con essas coordenadas para poder desescalarlas, ya que los
-        # __training_features han sido escalados al momento del entranemiento
-        points_scaled = numpy.array([[feature1_min, feature2_for_min],
-                                     [feature1_max, feature2_for_max]])
+        Args:
+            input_value (int | ndarray): valor escalar o arreglo donde se evaluara la derivada.
 
-        # desescalamos los resultados
-        points_original = self.__scaler.inverse_transform(points_scaled)
+        Returns:
+            float | ndarray: resultado de la derivada de la funcion sigmoide.
+        """
+        sigmoid_value = self.__sigmoid(input_value)
+        return sigmoid_value * (1 - sigmoid_value)
 
-        return DesicionBoundaryPoints(
-            x=float(points_original[0][0]), y=float(points_original[0][1]),
-            x2=float(points_original[1][0]), y2=float(points_original[1][1])
-        )
+    def __mean_squared_error(self, predictions: ndarray) -> float:
+        """
+        Calcula el error cuadratico medio entre las predicciones del modelo y los valores reales.
+
+        Args:
+            predictions (numpy.ndarray): arreglo de valores predichos por el modelos
+        Returns:
+            float: valor del error cuadratico medio
+        """
+        return numpy.mean((predictions - self.__training_labels) ** 2)  # se eleva para convertir valores negativos a positivos
 
     def __convert_predictions_to_binary(self, final_predictions: ndarray) -> ndarray:
         """
@@ -223,3 +194,31 @@ class NeuronalNetwork:
             binary_predictions == self.__training_labels)
 
         return round(final_accuracy * 100, 2)  # lo devolvemos en porcentaje
+
+    def __generate_decision_boundary(self) -> DesicionBoundaryPoints:
+        # los pesos al traterse de una matriz de (2,0) debemos aplanarla para que sea un array normal
+        weight_1, weight_2 = self.__weights.flatten()
+
+        # obtenemos solamente los mayores y menores de la primera posicion de las featrues pero con : tomamos en cuenta
+        # todas las features
+        feature1_min = min(self.__training_features[:, 0])
+        feature1_max = max(self.__training_features[:, 0])
+
+        feature2_for_min = - (weight_1 / weight_2) * \
+            feature1_min - (self.__bias / weight_2)
+
+        feature2_for_max = - (weight_1 / weight_2) * \
+            feature1_max - (self.__bias / weight_2)
+
+        # se crea una nueva matriz con essas coordenadas para poder desescalarlas, ya que los
+        # __training_features han sido escalados al momento del entranemiento
+        points_scaled = numpy.array([[feature1_min, feature2_for_min],
+                                     [feature1_max, feature2_for_max]])
+
+        # desescalamos los resultados
+        points_original = self.__scaler.inverse_transform(points_scaled)
+
+        return DesicionBoundaryPoints(
+            x=float(points_original[0][0]), y=float(points_original[0][1]),
+            x2=float(points_original[1][0]), y2=float(points_original[1][1])
+        )
