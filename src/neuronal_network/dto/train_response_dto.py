@@ -2,7 +2,7 @@
 from typing import Dict
 from pydantic import BaseModel
 
-from neuronal_network.dto.desicion_boundary_points import DesicionBoundaryPoints
+from src.neuronal_network.dto.desicion_boundary_points import DesicionBoundaryPoints
 
 
 class TrainResponseDTO(BaseModel):

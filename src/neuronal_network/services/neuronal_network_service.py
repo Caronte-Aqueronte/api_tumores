@@ -4,13 +4,13 @@ from typing import Dict, List, Tuple
 
 from fastapi import HTTPException, status
 from numpy import ndarray
-from neuronal_network.dto.model_result_response_dto import PredictResponseDto
-from neuronal_network.dto.prediction_response_dto import PredictionResponseDto
-from neuronal_network.dto.train_request_dto import TrainRequestDTO
-from neuronal_network.dto.predict_request_dto import PredictRequestDTO
-from neuronal_network.dto.train_response_dto import TrainResponseDTO
-from neuronal_network.neuronal.neuronal_network import NeuronalNetwork
-from neuronal_network.utils.data_handler import DataHandler
+from src.neuronal_network.dto.model_result_response_dto import PredictResponseDto
+from src.neuronal_network.dto.prediction_response_dto import PredictionResponseDto
+from src.neuronal_network.dto.train_request_dto import TrainRequestDTO
+from src.neuronal_network.dto.predict_request_dto import PredictRequestDTO
+from src.neuronal_network.dto.train_response_dto import TrainResponseDTO
+from src.neuronal_network.neuronal.neuronal_network import NeuronalNetwork
+from src.neuronal_network.utils.data_handler import DataHandler
 
 
 class NeuronalNetworkService:

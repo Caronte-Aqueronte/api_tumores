@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from neuronal_network.controllers.neuronal_network_controller import router as neuronal_controller
+from src.neuronal_network.controllers.neuronal_network_controller import router as neuronal_controller
 
 app = FastAPI()
 
